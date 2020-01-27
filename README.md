@@ -20,3 +20,7 @@ Kmax      without parallel      with parallel
 500       >10min                140.08sec
 
 Note that parallelization is not optimized because we have a replicate function executed separately in each thread but we can still observe a very good effect.
+
+Files :
+- CARTmtcars.R containing the code
+- 2 graphs (pdf) plotting error vs K for Kmax = 50 and 500 showing the convergence of the error but not toward 0 because our prediction is made on a testing sample which is not included in the learning sample. 
