@@ -5,10 +5,9 @@ head(mtcars)
 plot(mtcars)
 
 # we are trying to predict mpg
-
 # functionalize CART algorithm
 
-
+# step 1 : get maximal tree
 getMaxTree <- function(data) { # data is supposed to be Y in first column and X in others
     maxTree <- rpart(data[, 1] ~ ., data[, -1], control = rpart.control(minsplit = 2, cp = 0))
     # plot(maxTree)
@@ -18,7 +17,7 @@ getMaxTree <- function(data) { # data is supposed to be Y in first column and X 
     getMaxTree <- maxTree
 }
 
-
+# step 2 : get error threshold to be able to selet the best tree
 getThreshold <- function(maxTree) {
     myCPtable <- maxTree$cptable
     # myPlotCP <- plotcp(maxTree)
@@ -27,12 +26,15 @@ getThreshold <- function(maxTree) {
     getThreshold <- myCPtable_sorted[1,4]+myCPtable_sorted[1,5]
 }
 
+# get best CP to be able to get the best tree
 getBestCP <- function(maxTree, bestThreshold) {
     myCPtable <- maxTree$cptable
     myEligibleCP <- myCPtable[myCPtable[, 4] <= bestThreshold,]
+    # if several trees are elegible then sort them out and select the best
     if (is.vector(myEligibleCP) == FALSE) {
         myBestCP <- myEligibleCP[myEligibleCP[, 2] == min(myEligibleCP[, 2]), 1] # must be unique
     }
+    # otherwise we are done
     else {
         myBestCP <- myEligibleCP[1] # must be unique
     }
@@ -40,15 +42,12 @@ getBestCP <- function(maxTree, bestThreshold) {
 
 getBestTree <- function(data) {
     myMaxTree <- getMaxTree(data)
-
     myThreshold <- getThreshold(myMaxTree)
     # print("threshold = ")
     # print(myThreshold)
-
     myBestCP <- getBestCP(myMaxTree, myThreshold)
     # print("best CP =")
     # print(myBestCP)
-
     myBestTree <- rpart(data[, 1] ~ ., data[, -1], control = rpart.control(minsplit = 2, cp = myBestCP))
     # plot(myBestTree)
     # text(myBestTree)
@@ -107,7 +106,7 @@ simpleCompute <- function(Kmax) {
     return(as.vector(myErr))
 }
 
-# process our test and plot error vs K with 11 threads
+# process our test and plot error vs K with as many threads as the number of cores of the machine
 parCompute <- function(Kmax) {
     myPrep <- prepareCompute(Kmax)
     myLearn <- myPrep$myLearn
@@ -117,13 +116,10 @@ parCompute <- function(Kmax) {
     # create a cluster
     numCores <- detectCores()
     cl <- makeCluster(numCores)
-
     # export useful objects in the cluster
     clusterExport(cl, list("getMaxTree", "getThreshold", "getBestTree", "getBestCP", "getBootstrap", "getPoint", "myLearn", "myTest", "myK"))
-
     # parallelize sapply
     myErr <- parSapply(cl, myPrep$myK, FUN = function(x) { return(getPoint(myPrep$myLearn, myPrep$myTest, x, 10, nrow(mtcars))) }, simplify = simplify)
-
     # close the cluster
     stopCluster(cl)
 
