@@ -52,7 +52,7 @@ getBestTree <- function(data) {
     # plot(myBestTree)
     # text(myBestTree)
     # print(myBestTree)
-    # print(summary(myBestTree))
+    # print(summary(myBestTree)) 
     getBestTree <- myBestTree
 }
 
