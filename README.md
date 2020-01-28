@@ -11,20 +11,25 @@ We are using the default mtcars data set in R, trying to predict mpg as a respon
 
 Note that parallelization is not optimized because we have a replicate function executed separately in each thread but we can still observe a very good effect since I added a shuffling of the list of K values to balance out the load on each thread.
 
-I'm using a processor Inter Core i7-8700 (12 cores) and I got :
+I'm using a processor Inter Core i7-8700 (12 cores) and I got : (times in sec.)
 
-Kmax      without parallel      with parallel             with parallel
+with multiple small functions
 
-                                not shuffling K list      shuffling K list
-                                
-50        6.62sec               6.17sec                   6.53sec.
+| Kmax | without parallel | with parallel | with parallel & suffling K list |
+|-----:|-----------------:|--------------:|--------------------------------:|
+|50|6.62|6.17|6.53|
+|100|25.78|10.19|9.73|
+|200|235.39|27.16|22.30|
+|500|>1000|140.08|103.95|
 
-100       25.78sec              10.19sec                  9.73sec
+unifying getBestTree() into one single function
 
-200       235.39sec             27.16sec                  22.30sec
-
-500       >10min                140.08sec                 103.95sec
-
+| Kmax | without parallel | with parallel & suffling K list |
+|-----:|-----------------:|--------------------------------:|
+|50|6.55|5.53|
+|100|26.09|9.35|
+|200|103.95|21.75|
+|500|?|109.82|
 
 Files :
 - CARTmtcars.R containing the code
