@@ -29,7 +29,7 @@ unifying getBestTree() into one single function
 |50|6.55|5.53|
 |100|26.09|9.35|
 |200|103.95|21.75|
-|500|?|109.82|
+|500|653|109.82|
 
 Files :
 - CARTmtcars.R containing the code
