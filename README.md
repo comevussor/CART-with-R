@@ -14,11 +14,17 @@ Note that parallelization is not optimized because we have a replicate function 
 I'm using a processor Inter Core i7-8700 (12 cores) and I got :
 
 Kmax      without parallel      with parallel             with parallel
+
                                 not shuffling K list      shuffling K list
+                                
 50        6.62sec               6.17sec                   6.53sec.
+
 100       25.78sec              10.19sec                  9.73sec
+
 200       235.39sec             27.16sec                  22.30sec
+
 500       >10min                140.08sec                 103.95sec
+
 
 Files :
 - CARTmtcars.R containing the code
