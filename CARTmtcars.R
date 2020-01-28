@@ -5,6 +5,7 @@ head(mtcars)
 plot(mtcars)
 
 # we are trying to predict mpg
+
 # functionalize CART algorithm
 
 # step 1 : get maximal tree
@@ -30,7 +31,7 @@ getThreshold <- function(maxTree) {
 getBestCP <- function(maxTree, bestThreshold) {
     myCPtable <- maxTree$cptable
     myEligibleCP <- myCPtable[myCPtable[, 4] <= bestThreshold,]
-    # if several trees are elegible then sort them out and select the best
+    # if several trees are elegible then sort them out
     if (is.vector(myEligibleCP) == FALSE) {
         myBestCP <- myEligibleCP[myEligibleCP[, 2] == min(myEligibleCP[, 2]), 1] # must be unique
     }
@@ -42,17 +43,20 @@ getBestCP <- function(maxTree, bestThreshold) {
 
 getBestTree <- function(data) {
     myMaxTree <- getMaxTree(data)
+
     myThreshold <- getThreshold(myMaxTree)
     # print("threshold = ")
     # print(myThreshold)
+
     myBestCP <- getBestCP(myMaxTree, myThreshold)
     # print("best CP =")
     # print(myBestCP)
+
     myBestTree <- rpart(data[, 1] ~ ., data[, -1], control = rpart.control(minsplit = 2, cp = myBestCP))
     # plot(myBestTree)
     # text(myBestTree)
     # print(myBestTree)
-    # print(summary(myBestTree)) 
+    # print(summary(myBestTree))
     getBestTree <- myBestTree
 }
 
@@ -67,7 +71,7 @@ getSplit <- function(data, ts) {
     # ts = testing sample size
     n <- nrow(data)
     testIndex <- sample(1:n, ts)
-    mySplit <- list(learn = data[-testIndex,], test = data[testIndex,])
+    mySplit <- list(learnData = data[-testIndex,], testData = data[testIndex,])
 }
 
 # create a bootstrap sample with replacement of size bs
@@ -84,57 +88,53 @@ getPoint <- function(learnData, testData, K, ts, bs) { # ts = test size, bs = bo
     # get prediction out of K predictions
     myBagPredict <- rowMeans(myKpredict)
     # get norm 2 error between predicition and real value
-    getPoint <- norm(myBagPredict - testData[1], type = "2")
+    getPoint <- norm(myBagPredict - testData[1], type = "2") / length(myBagPredict)
 }
 
 # prepare split for our test with bagging going from 2 to Kmax
 prepareCompute <- function(Kmax) {
     mySplit <- getSplit(mtcars, 10)
-    myLearn <- mySplit$learn
-    myTest <- mySplit$test
-    myK <- 2:Kmax
-    myPrep <- list(myLearn, myTest, myK)
-    names(myPrep) <- list ("myLearn", "myTest", "myK")
+    myK <- sample(2:Kmax, Kmax - 1)
+    myPrep <- list(learnData = mySplit$learnData, testData = mySplit$testData, myK = myK)
     return (myPrep)
 }
 
 # process our test and plot error vs K without parrallelization
 simpleCompute <- function(Kmax) {
     myPrep <- prepareCompute(Kmax)
-    myErr <- lapply(myPrep$myK, function(x) { return(getPoint(myPrep$myLearn, myPrep$myTest, x, 10, nrow(mtcars))) })
-    plot(myPrep$myK, myErr)
+
+    myErr <- lapply(myPrep$myK, function(x) { return(getPoint(myPrep$learnData, myPrep$testData, x, 10, nrow(mtcars))) })
+
     return(as.vector(myErr))
 }
 
-# process our test and plot error vs K with as many threads as the number of cores of the machine
+# process our test and plot error vs K with 11 threads
 parCompute <- function(Kmax) {
-    myPrep <- prepareCompute(Kmax)
-    myLearn <- myPrep$myLearn
-    myTest <- myPrep$myTest
-    myK <- myPrep$myK
+    myParPrep <- prepareCompute(Kmax)
+    myEnvir <- environment()
 
     # create a cluster
     numCores <- detectCores()
     cl <- makeCluster(numCores)
+
     # export useful objects in the cluster
-    clusterExport(cl, list("getMaxTree", "getThreshold", "getBestTree", "getBestCP", "getBootstrap", "getPoint", "myLearn", "myTest", "myK"))
+    clusterExport(cl, list("getMaxTree", "getThreshold", "getBestTree", "getBestCP", "getSplit", "getBootstrap", "getPoint", "prepareCompute"))
+    clusterExport(cl, list("Kmax", "myParPrep"), envir = myEnvir)
+
     # parallelize sapply
-    myErr <- parSapply(cl, myPrep$myK, FUN = function(x) { return(getPoint(myPrep$myLearn, myPrep$myTest, x, 10, nrow(mtcars))) }, simplify = simplify)
+    myErr <- parSapply(cl, myParPrep$myK, FUN = function(x) { return(getPoint(myParPrep$learnData, myParPrep$testData, x, 10, nrow(mtcars))) })
+    
     # close the cluster
     stopCluster(cl)
 
-    plot(myPrep$myK, myErr)
+    plot(myParPrep$myK, myErr)
     return(as.vector(myErr))
 }
 
-system.time(simpleCompute(50))
-system.time(parCompute(50))
 
-system.time(simpleCompute(100))
-system.time(parCompute(100))
+myKmaxList <- c(50, 100, 200)
+myResults <- lapply(myKmaxList, FUN = function(x) { list(system.time(simpleCompute(x)), system.time(parCompute(x))) })
+names(myResults) <- myKmaxList
+myResults
 
-system.time(simpleCompute(200))
-system.time(parCompute(200))
-
-# system.time(simpleCompute(500))
 system.time(parCompute(500))
