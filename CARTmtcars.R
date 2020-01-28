@@ -8,29 +8,27 @@ plot(mtcars)
 
 # functionalize CART algorithm
 
-# step 1 : get maximal tree
-getMaxTree <- function(data) { # data is supposed to be Y in first column and X in others
-    maxTree <- rpart(data[, 1] ~ ., data[, -1], control = rpart.control(minsplit = 2, cp = 0))
-    # plot(maxTree)
-    # text(maxTree)
-    # print(maxTree)
-    # print(summary(maxTree))
-    getMaxTree <- maxTree
-}
+getBestTree <- function(data) {
+    # get maximal tree
+    myMaxTree <- rpart(data[, 1] ~ ., data[, -1], control = rpart.control(minsplit = 2, cp = 0))
+    # plot(myMaxTree)
+    # text(myMaxTree)
+    # print(myMaxTree)
+    # print(summary(myMaxTree))
+    
+    # get CP table of myMaxTree
+    myCPtable <- myMaxTree$cptable
+    # myPlotCP <- plotcp(myMaxTree)
 
-# step 2 : get error threshold to be able to selet the best tree
-getThreshold <- function(maxTree) {
-    myCPtable <- maxTree$cptable
-    # myPlotCP <- plotcp(maxTree)
+    #get error threshold to be able to selet the best tree
     # we may have several trees with min xerr, take min xstd and then, min nsplit (must be unique in the end)
     myCPtable_sorted <- myCPtable[order(myCPtable[, 4], myCPtable[, 5], myCPtable[, 2]),]
-    getThreshold <- myCPtable_sorted[1,4]+myCPtable_sorted[1,5]
-}
+    myThreshold <- myCPtable_sorted[1, 4] + myCPtable_sorted[1, 5]
+    # print("threshold = ")
+    # print(myThreshold)
 
-# get best CP to be able to get the best tree
-getBestCP <- function(maxTree, bestThreshold) {
-    myCPtable <- maxTree$cptable
-    myEligibleCP <- myCPtable[myCPtable[, 4] <= bestThreshold,]
+    # get best CP to be able to get the best tree
+    myEligibleCP <- myCPtable[myCPtable[, 4] <= myThreshold,]
     # if several trees are elegible then sort them out
     if (is.vector(myEligibleCP) == FALSE) {
         myBestCP <- myEligibleCP[myEligibleCP[, 2] == min(myEligibleCP[, 2]), 1] # must be unique
@@ -39,19 +37,9 @@ getBestCP <- function(maxTree, bestThreshold) {
     else {
         myBestCP <- myEligibleCP[1] # must be unique
     }
-}
-
-getBestTree <- function(data) {
-    myMaxTree <- getMaxTree(data)
-
-    myThreshold <- getThreshold(myMaxTree)
-    # print("threshold = ")
-    # print(myThreshold)
-
-    myBestCP <- getBestCP(myMaxTree, myThreshold)
     # print("best CP =")
     # print(myBestCP)
-
+    
     myBestTree <- rpart(data[, 1] ~ ., data[, -1], control = rpart.control(minsplit = 2, cp = myBestCP))
     # plot(myBestTree)
     # text(myBestTree)
@@ -60,8 +48,9 @@ getBestTree <- function(data) {
     getBestTree <- myBestTree
 }
 
+# OPTIONAL
 # Let us determine the CART tree associated to mtcars
-myBestTree <- getBestTree(mtcars)
+# myBestTree <- getBestTree(mtcars)
 # unstable : different at each execution
 
 # Let us do bagging and CART to plot error as a funciton of K (number of bootstrap sample)
@@ -118,7 +107,7 @@ parCompute <- function(Kmax) {
     cl <- makeCluster(numCores)
 
     # export useful objects in the cluster
-    clusterExport(cl, list("getMaxTree", "getThreshold", "getBestTree", "getBestCP", "getSplit", "getBootstrap", "getPoint", "prepareCompute"))
+    clusterExport(cl, list("getBestTree","getSplit", "getBootstrap", "getPoint", "prepareCompute"))
     clusterExport(cl, list("Kmax", "myParPrep"), envir = myEnvir)
 
     # parallelize sapply
@@ -138,3 +127,4 @@ names(myResults) <- myKmaxList
 myResults
 
 system.time(parCompute(500))
+system.time(simpleCompute(500))
