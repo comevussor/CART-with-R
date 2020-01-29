@@ -15,7 +15,7 @@ I'm using a processor Inter Core i7-8700 (12 cores) and I got : (times in sec.)
 
 with multiple small functions
 
-| Kmax | without parallel | with parallel | with parallel & suffling K list |
+| Kmax | without parallel | with parallel | with parallel & shuffling K list |
 |-----:|-----------------:|--------------:|--------------------------------:|
 |50|6.62|6.17|6.53|
 |100|25.78|10.19|9.73|
@@ -24,7 +24,7 @@ with multiple small functions
 
 unifying getBestTree() into one single function
 
-| Kmax | without parallel | with parallel & suffling K list |& prune() instead of rpart()|
+| Kmax | without parallel | with parallel & shuffling K list |& prune() instead of rpart()|
 |-----:|-----------------:|--------------------------------:|---------------------------:|
 |50|6.55|5.53|5.99|
 |100|26.09|9.35|8.38|
