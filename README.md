@@ -24,12 +24,12 @@ with multiple small functions
 
 unifying getBestTree() into one single function
 
-| Kmax | without parallel | with parallel & suffling K list |
-|-----:|-----------------:|--------------------------------:|
-|50|6.55|5.53|
-|100|26.09|9.35|
-|200|103.95|21.75|
-|500|653|109.82|
+| Kmax | without parallel | with parallel & suffling K list |& prune() instead of rpart()|
+|-----:|-----------------:|--------------------------------:|---------------------------:|
+|50|6.55|5.53|5.99|
+|100|26.09|9.35|8.38|
+|200|103.95|21.75|17.71|
+|500|653|109.82|82.55|
 
 Files :
 - CARTmtcars.R containing the code
