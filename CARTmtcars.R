@@ -40,7 +40,8 @@ getBestTree <- function(data) {
     # print("best CP =")
     # print(myBestCP)
     
-    myBestTree <- rpart(data[, 1] ~ ., data[, -1], control = rpart.control(minsplit = 2, cp = myBestCP))
+    # prune our maximal tree
+    myBestTree <- prune(myMaxTree, cp = myBestCP) 
     # plot(myBestTree)
     # text(myBestTree)
     # print(myBestTree)
